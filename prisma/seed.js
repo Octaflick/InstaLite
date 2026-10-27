@@ -1,0 +1,49 @@
+import prisma from "../src/db.js";
+import { users, posts, likes } from "./seed-data.js";
+
+async function main() {
+  await prisma.like.deleteMany();
+  await prisma.post.deleteMany();
+  await prisma.user.deleteMany();
+
+  const createdUsers = await prisma.user.createManyAndReturn({
+    data: users.map((user) => ({ ...user, createdAt: new Date(user.createdAt) })),
+  });
+  const userIds = new Map(createdUsers.map((user) => [user.username, user.id]));
+
+  const createdPosts = await prisma.post.createManyAndReturn({
+    data: posts.map((post) => ({
+      imageUrl: post.imageUrl,
+      caption: post.caption,
+      location: post.location,
+      authorId: userIds.get(post.author),
+      createdAt: new Date(post.createdAt),
+    })),
+  });
+  const postIds = new Map(
+    createdPosts.map((post) => [
+      post.imageUrl.split("/")[4],
+      post.id,
+    ]),
+  );
+
+  const createdLikes = await prisma.like.createManyAndReturn({
+    data: likes.map((like) => ({
+      userId: userIds.get(like.user),
+      postId: postIds.get(like.post),
+    })),
+  });
+
+  console.log(
+    `🌱 Seeded ${createdUsers.length} users, ${createdPosts.length} posts and ${createdLikes.length} likes`,
+  );
+}
+
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

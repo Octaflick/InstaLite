@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+dev.db
+dev.db-journal
+dev.db-shm
+dev.db-wal
+
+# Assignment source material is not part of the application.
+problem (1).md
+problem (2).md
+problem (3).md
